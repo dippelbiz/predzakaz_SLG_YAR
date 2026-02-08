@@ -1,0 +1,320 @@
+import os
+import telebot
+from flask import Flask, request
+
+# ====== НАСТРОЙКИ ======
+TOKEN = os.environ.get('BOT_TOKEN', "8225797059:AAGaGV9EFlq4fIZDAVpssedOKir-s_h3uBQ")
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
+
+# ID менеджера (замените на ваш реальный Telegram ID)
+MANAGER_CHAT_ID = 952957376  # Пример ID, измените на свой
+
+# Хранилище данных пользователей
+user_data = {}
+
+# Каталог товаров
+catalog = {
+    "product_1": {
+        "name": "Грецкий орех очищенный",
+        "description": "Это ценили дороже золота 👑
+
+В Древнем Вавилоне простым людям запрещали есть грецкие орехи. Считалось, что они сильно развивают ум и предназначены только для знати. 
+
+Хорошо, что сегодня все могут быть умными 🤪
+
+Грецкий орех очищенный
+Упаковка 500 г
+Цена 400 ₽",
+        "photo_url": "https://disk.yandex.ru/i/rIMcLawZEGX4WA"
+    },
+    "product_2": {
+        "name": "Орехи: Миндаль золотой", 
+        "description": "Символ женской красоты
+
+Самый богатый витамином Е орех,
+и самый мощный антиоксидант
+с интересной историей. 
+
+Кстати, в разных культурах он символизировал богатство, 
+удачу и женскую красоту 💎
+
+Миндаль золотой
+Упаковка 1000 г
+Цена 950 ₽",
+        "photo_url": "https://disk.yandex.ru/i/PXg4ouVZw85Ohg"
+    }, 
+   "product_3": {
+        "name": "Орехи: Кешью", 
+        "description": "Тестовый текст
+
+Кешью
+Упаковка 1000 г
+Цена 1000 ₽",
+        "photo_url": "https://disk.yandex.ru/i/E8x4OBEr7jC1bA"
+    },
+"product_4": {
+        "name": "Клубника сушеная", 
+        "description": "Самый легкий способ стать счастливее
+
+Эти ягоды стимулируют выработку гормонов радости, а их аромат мгновенно поднимает настроение.
+
+Счастья много не бывает 😉
+
+Клубника сушеная 
+Упаковка 500 г
+Цена 350 ₽",
+        "photo_url": "https://disk.yandex.ru/i/71EDUWBk8SCnqQ"
+    },
+    "product_5": {
+        "name": "Манго сушеное",
+        "description": "Фрукт солнца и любви❤️
+
+Это не только вкусно, но и очень полезно. Настоящая кладезь витаминов, которая оставляет в восторге взрослых и детей!
+
+Интересный факт: для 1 кг сушеного фрукта используется около 10 кг свежих плодов😁
+
+Сушенное манго без сахара 
+Упаковка 500 г
+Цена 250 ₽",
+        "photo_url": "https://disk.yandex.ru/i/C_iUTpl_ZUsEww"
+    }
+}
+
+# ====== КЛАВИАТУРЫ ======
+def main_menu():
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add("📖 Каталог товаров")
+    keyboard.add("ℹ️ О нас", "📞 Контакты")
+    return keyboard
+
+def catalog_menu():
+    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
+    for product_id, product_info in catalog.items():
+        keyboard.add(
+            telebot.types.InlineKeyboardButton(
+                text=product_info["name"],
+                callback_data=f"product_{product_id}"
+            )
+        )
+    return keyboard
+
+def city_selection():
+    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(
+            "🏙️ Сделать предзаказ в Городе А",
+            callback_data="city_a"
+        ),
+        telebot.types.InlineKeyboardButton(
+            "🏙️ Сделать предзаказ в Городе В", 
+            callback_data="city_b"
+        ),
+        telebot.types.InlineKeyboardButton(
+            "🔙 Назад в каталог",
+            callback_data="back_to_catalog"
+        )
+    )
+    return keyboard
+
+# ====== ОБРАБОТЧИКИ ======
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    welcome_text = (
+        "👋 Добро пожаловать в бот предзаказов!\n\n"
+        "Здесь вы можете оформить предзаказ на наши товары.\n"
+        "Выберите товар из каталога и город получения."
+    )
+    bot.send_message(message.chat.id, welcome_text, reply_markup=main_menu())
+
+@bot.message_handler(func=lambda message: message.text == "📖 Каталог товаров")
+def show_catalog(message):
+    bot.send_message(
+        message.chat.id,
+        "📋 Выберите товар из каталога:",
+        reply_markup=catalog_menu()
+    )
+
+@bot.message_handler(func=lambda message: message.text == "ℹ️ О нас")
+def about_us(message):
+    bot.send_message(
+        message.chat.id,
+        "🏢 О нашей компании:\n\n"
+        "Мы специализируемся на качественных товарах с доставкой в города А и В.\n"
+        "Предзаказы обрабатываются в течение 24 часов."
+    )
+
+@bot.message_handler(func=lambda message: message.text == "📞 Контакты")
+def contacts(message):
+    bot.send_message(
+        message.chat.id,
+        "📞 Контакты:\n\n"
+        "Телефон: +7 (XXX) XXX-XX-XX\n"
+        "Email: info@example.com\n"
+        "График работы: Пн-Пт 9:00-18:00"
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('product_'))
+def show_product_details(call):
+    product_id = call.data
+    
+    if product_id.startswith("product_product_"):
+        product_id = product_id.replace("product_", "", 1)
+    
+    product_info = catalog.get(product_id)
+    
+    if product_info:
+        # Отправляем фото товара
+        bot.send_photo(
+            chat_id=call.message.chat.id,
+            photo=product_info["photo_url"],
+            caption=f"📦 *{product_info['name']}*\n\n{product_info['description']}",
+            parse_mode="Markdown",
+            reply_markup=city_selection()
+        )
+        # Сохраняем выбранный товар
+        user_data[call.message.chat.id] = {"product": product_info["name"]}
+        bot.answer_callback_query(call.id)
+    else:
+        bot.answer_callback_query(call.id, "Товар не найден")
+
+@bot.callback_query_handler(func=lambda call: call.data in ['city_a', 'city_b'])
+def select_city(call):
+    city_name = "Город А" if call.data == "city_a" else "Город В"
+    
+    # Сохраняем выбранный город
+    if call.message.chat.id in user_data:
+        user_data[call.message.chat.id]["city"] = city_name
+    else:
+        user_data[call.message.chat.id] = {"city": city_name}
+    
+    instruction_text = (
+        "🟢 *Пошаговая инструкция:*\n\n"
+        "1. Напишите, что хотите заказать\n"
+        "2. Менеджер свяжется с вами"
+    )
+    
+    bot.edit_message_caption(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        caption=instruction_text,
+        parse_mode="Markdown"
+    )
+    
+    # Скрываем кнопки
+    bot.edit_message_reply_markup(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        reply_markup=None
+    )
+    
+    # Просим написать заказ
+    bot.send_message(
+        call.message.chat.id,
+        f"📍 Вы выбрали: {city_name}\n\n"
+        f"Теперь напишите, что именно вы хотите заказать "
+        f"(например: '{user_data[call.message.chat.id].get('product', 'товар')}', 2 шт.)"
+    )
+    
+    bot.answer_callback_query(call.id, f"Выбрано: {city_name}")
+
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_catalog")
+def back_to_catalog(call):
+    bot.edit_message_reply_markup(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        reply_markup=catalog_menu()
+    )
+    bot.answer_callback_query(call.id)
+
+@bot.message_handler(func=lambda message: True, content_types=['text'])
+def handle_order(message):
+    chat_id = message.chat.id
+    
+    # Проверяем, есть ли у пользователя выбранный город
+    if chat_id in user_data and "city" in user_data[chat_id]:
+        order_text = message.text
+        city = user_data[chat_id]["city"]
+        
+        # Формируем информацию о заказе
+        user_info = {
+            'name': message.from_user.first_name or "Покупатель",
+            'username': message.from_user.username or "Нет username",
+            'user_id': message.from_user.id,
+            'order': order_text,
+            'city': city
+        }
+        
+        # Сообщение покупателю
+        confirmation_text = (
+            f"✅ *Ваш предзаказ принят!*\n\n"
+            f"📍 Город получения: {city}\n"
+            f"📝 Ваш заказ: {order_text}\n\n"
+            f"Менеджер скоро свяжется с вами для уточнения деталей."
+        )
+        
+        bot.send_message(chat_id, confirmation_text, parse_mode="Markdown", reply_markup=main_menu())
+        
+        # Сообщение менеджеру
+        manager_message = (
+            f"📦 *НОВЫЙ ПРЕДЗАКАЗ!*\n\n"
+            f"👤 Покупатель: {user_info['name']}\n"
+            f"👤 Username: @{user_info['username']}\n"
+            f"📍 Город: {city}\n"
+            f"📝 Заказ: {order_text}\n"
+            f"🆔 ID: {user_info['user_id']}\n\n"
+            f"💬 Ссылка для связи: tg://user?id={user_info['user_id']}"
+        )
+        
+        try:
+            bot.send_message(MANAGER_CHAT_ID, manager_message, parse_mode="Markdown")
+            print(f"✅ Заказ отправлен менеджеру: {user_info}")
+        except Exception as e:
+            print(f"❌ Ошибка отправки менеджеру: {e}")
+            bot.send_message(
+                chat_id,
+                "⚠️ Заказ принят, но возникла проблема с уведомлением менеджера. "
+                "Пожалуйста, свяжитесь с нами через контакты."
+            )
+        
+        # Очищаем данные пользователя
+        if chat_id in user_data:
+            del user_data[chat_id]
+    
+    else:
+        # Если пользователь просто пишет текст без выбора города
+        if message.text not in ["📖 Каталог товаров", "ℹ️ О нас", "📞 Контакты"]:
+            bot.send_message(
+                chat_id,
+                "Для оформления заказа сначала выберите товар из каталога 📖",
+                reply_markup=main_menu()
+            )
+
+# ====== WEBHOOK ======
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return ''
+    return 'Bad Request', 400
+
+@app.route('/')
+def index():
+    return '🤖 Бот предзаказов работает'
+
+# ====== ЗАПУСК ======
+if __name__ == '__main__':
+    # Устанавливаем вебхук
+    bot.remove_webhook()
+    
+    service_name = os.environ.get('RENDER_SERVICE_NAME', 'dp-sbor')
+    webhook_url = f'https://{service_name}.onrender.com/webhook'
+    
+    bot.set_webhook(url=webhook_url)
+    print(f"✅ Вебхук установлен: {webhook_url}")
+    
+    # Запускаем сервер
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)
