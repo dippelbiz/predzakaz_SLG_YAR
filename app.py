@@ -3,81 +3,42 @@ import telebot
 from flask import Flask, request
 
 # ====== НАСТРОЙКИ ======
-TOKEN = os.environ.get('BOT_TOKEN', "8225797059:AAGaGV9EFlq4fIZDAVpssedOKir-s_h3uBQ")
+TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# ID менеджера (замените на ваш реальный Telegram ID)
-MANAGER_CHAT_ID = 952957376  # Пример ID, измените на свой
+# ID менеджера
+MANAGER_CHAT_ID = os.environ.get('MANAGER_CHAT_ID', 952957376)
 
 # Хранилище данных пользователей
 user_data = {}
 
-# Каталог товаров
+# Каталог товаров (используем прямые ссылки на фото)
 catalog = {
     "product_1": {
         "name": "Грецкий орех очищенный",
-        "description": "Это ценили дороже золота 👑
-
-В Древнем Вавилоне простым людям запрещали есть грецкие орехи. Считалось, что они сильно развивают ум и предназначены только для знати. 
-
-Хорошо, что сегодня все могут быть умными 🤪
-
-Грецкий орех очищенный
-Упаковка 500 г
-Цена 400 ₽",
-        "photo_url": "https://disk.yandex.ru/i/rIMcLawZEGX4WA"
+        "description": "Это ценили дороже золота 👑\n\nВ Древнем Вавилоне простым людям запрещали есть грецкие орехи. Считалось, что они сильно развивают ум и предназначены только для знати.\n\nХорошо, что сегодня все могут быть умными 🤪\n\nГрецкий орех очищенный\nУпаковка 500 г\nЦена 400 ₽",
+        "photo_url": "https://img.freepik.com/free-photo/walnuts-isolated-white-background_93675-134686.jpg"  # Пример фото
     },
     "product_2": {
         "name": "Орехи: Миндаль золотой", 
-        "description": "Символ женской красоты
-
-Самый богатый витамином Е орех,
-и самый мощный антиоксидант
-с интересной историей. 
-
-Кстати, в разных культурах он символизировал богатство, 
-удачу и женскую красоту 💎
-
-Миндаль золотой
-Упаковка 1000 г
-Цена 950 ₽",
-        "photo_url": "https://disk.yandex.ru/i/PXg4ouVZw85Ohg"
+        "description": "Символ женской красоты\n\nСамый богатый витамином Е орех, и самый мощный антиоксидант с интересной историей.\n\nКстати, в разных культурах он символизировал богатство, удачу и женскую красоту 💎\n\nМиндаль золотой\nУпаковка 1000 г\nЦена 950 ₽",
+        "photo_url": "https://img.freepik.com/free-photo/almonds-white-background_93675-134698.jpg"
     }, 
-   "product_3": {
+    "product_3": {
         "name": "Орехи: Кешью", 
-        "description": "Тестовый текст
-
-Кешью
-Упаковка 1000 г
-Цена 1000 ₽",
-        "photo_url": "https://disk.yandex.ru/i/E8x4OBEr7jC1bA"
+        "description": "Кешью\nУпаковка 1000 г\nЦена 1000 ₽",
+        "photo_url": "https://img.freepik.com/free-photo/cashew-nuts-white-background_93675-134688.jpg"
     },
-"product_4": {
+    "product_4": {
         "name": "Клубника сушеная", 
-        "description": "Самый легкий способ стать счастливее
-
-Эти ягоды стимулируют выработку гормонов радости, а их аромат мгновенно поднимает настроение.
-
-Счастья много не бывает 😉
-
-Клубника сушеная 
-Упаковка 500 г
-Цена 350 ₽",
-        "photo_url": "https://disk.yandex.ru/i/71EDUWBk8SCnqQ"
+        "description": "Самый легкий способ стать счастливее\n\nЭти ягоды стимулируют выработку гормонов радости, а их аромат мгновенно поднимает настроение.\n\nСчастья много не бывает 😉\n\nКлубника сушеная\nУпаковка 500 г\nЦена 350 ₽",
+        "photo_url": "https://img.freepik.com/free-photo/dried-strawberries-white-background_93675-134732.jpg"
     },
     "product_5": {
         "name": "Манго сушеное",
-        "description": "Фрукт солнца и любви❤️
-
-Это не только вкусно, но и очень полезно. Настоящая кладезь витаминов, которая оставляет в восторге взрослых и детей!
-
-Интересный факт: для 1 кг сушеного фрукта используется около 10 кг свежих плодов😁
-
-Сушенное манго без сахара 
-Упаковка 500 г
-Цена 250 ₽",
-        "photo_url": "https://disk.yandex.ru/i/C_iUTpl_ZUsEww"
+        "description": "Фрукт солнца и любви❤️\n\nЭто не только вкусно, но и очень полезно. Настоящая кладезь витаминов, которая оставляет в восторге взрослых и детей!\n\nИнтересный факт: для 1 кг сушеного фрукта используется около 10 кг свежих плодов😁\n\nСушенное манго без сахара\nУпаковка 500 г\nЦена 250 ₽",
+        "photo_url": "https://img.freepik.com/free-photo/dried-mango-white-background_93675-134734.jpg"
     }
 }
 
@@ -103,11 +64,11 @@ def city_selection():
     keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         telebot.types.InlineKeyboardButton(
-            "🏙️ Сделать предзаказ в Городе А",
+            "🏙️ Сделать предзаказ в Ярославле",
             callback_data="city_a"
         ),
         telebot.types.InlineKeyboardButton(
-            "🏙️ Сделать предзаказ в Городе В", 
+            "🏙️ Сделать предзаказ в Москве", 
             callback_data="city_b"
         ),
         telebot.types.InlineKeyboardButton(
@@ -140,7 +101,7 @@ def about_us(message):
     bot.send_message(
         message.chat.id,
         "🏢 О нашей компании:\n\n"
-        "Мы специализируемся на качественных товарах с доставкой в города А и В.\n"
+        "Мы специализируемся на качественных сухофруктах и орехах с доставкой в Ярославль и Москву.\n"
         "Предзаказы обрабатываются в течение 24 часов."
     )
 
@@ -158,20 +119,32 @@ def contacts(message):
 def show_product_details(call):
     product_id = call.data
     
+    # Убираем лишний префикс если есть
     if product_id.startswith("product_product_"):
         product_id = product_id.replace("product_", "", 1)
     
     product_info = catalog.get(product_id)
     
     if product_info:
-        # Отправляем фото товара
-        bot.send_photo(
-            chat_id=call.message.chat.id,
-            photo=product_info["photo_url"],
-            caption=f"📦 *{product_info['name']}*\n\n{product_info['description']}",
-            parse_mode="Markdown",
-            reply_markup=city_selection()
-        )
+        try:
+            # Отправляем фото товара
+            bot.send_photo(
+                chat_id=call.message.chat.id,
+                photo=product_info["photo_url"],
+                caption=f"📦 *{product_info['name']}*\n\n{product_info['description']}",
+                parse_mode="Markdown",
+                reply_markup=city_selection()
+            )
+        except Exception as e:
+            # Если фото не загрузилось, отправляем только текст
+            print(f"Ошибка загрузки фото: {e}")
+            bot.send_message(
+                call.message.chat.id,
+                f"📦 *{product_info['name']}*\n\n{product_info['description']}",
+                parse_mode="Markdown",
+                reply_markup=city_selection()
+            )
+        
         # Сохраняем выбранный товар
         user_data[call.message.chat.id] = {"product": product_info["name"]}
         bot.answer_callback_query(call.id)
@@ -180,7 +153,7 @@ def show_product_details(call):
 
 @bot.callback_query_handler(func=lambda call: call.data in ['city_a', 'city_b'])
 def select_city(call):
-    city_name = "Город А" if call.data == "city_a" else "Город В"
+    city_name = "Ярославль" if call.data == "city_a" else "Москва"
     
     # Сохраняем выбранный город
     if call.message.chat.id in user_data:
@@ -190,41 +163,58 @@ def select_city(call):
     
     instruction_text = (
         "🟢 *Пошаговая инструкция:*\n\n"
-        "1. Напишите, что хотите заказать\n"
+        "1. Напишите, что хотите заказать (например: 'Грецкий орех, 2 упаковки')\n"
         "2. Менеджер свяжется с вами"
     )
     
-    bot.edit_message_caption(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        caption=instruction_text,
-        parse_mode="Markdown"
-    )
-    
-    # Скрываем кнопки
-    bot.edit_message_reply_markup(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        reply_markup=None
-    )
+    # Пытаемся обновить подпись, если это фото
+    try:
+        bot.edit_message_caption(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            caption=instruction_text,
+            parse_mode="Markdown"
+        )
+        
+        bot.edit_message_reply_markup(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=None
+        )
+    except:
+        # Если не фото, а текстовое сообщение
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=instruction_text,
+            parse_mode="Markdown"
+        )
     
     # Просим написать заказ
     bot.send_message(
         call.message.chat.id,
         f"📍 Вы выбрали: {city_name}\n\n"
         f"Теперь напишите, что именно вы хотите заказать "
-        f"(например: '{user_data[call.message.chat.id].get('product', 'товар')}', 2 шт.)"
+        f"(например: '{user_data[call.message.chat.id].get('product', 'товар')}', 2 упаковки)"
     )
     
     bot.answer_callback_query(call.id, f"Выбрано: {city_name}")
 
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_catalog")
 def back_to_catalog(call):
-    bot.edit_message_reply_markup(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        reply_markup=catalog_menu()
-    )
+    try:
+        bot.edit_message_reply_markup(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=catalog_menu()
+        )
+    except:
+        # Если не получается обновить, отправляем новое сообщение
+        bot.send_message(
+            call.message.chat.id,
+            "📋 Выберите товар из каталога:",
+            reply_markup=catalog_menu()
+        )
     bot.answer_callback_query(call.id)
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
@@ -235,6 +225,7 @@ def handle_order(message):
     if chat_id in user_data and "city" in user_data[chat_id]:
         order_text = message.text
         city = user_data[chat_id]["city"]
+        product = user_data[chat_id].get("product", "товар")
         
         # Формируем информацию о заказе
         user_info = {
@@ -242,7 +233,8 @@ def handle_order(message):
             'username': message.from_user.username or "Нет username",
             'user_id': message.from_user.id,
             'order': order_text,
-            'city': city
+            'city': city,
+            'product': product
         }
         
         # Сообщение покупателю
@@ -262,6 +254,7 @@ def handle_order(message):
             f"👤 Username: @{user_info['username']}\n"
             f"📍 Город: {city}\n"
             f"📝 Заказ: {order_text}\n"
+            f"🛒 Товар: {product}\n"
             f"🆔 ID: {user_info['user_id']}\n\n"
             f"💬 Ссылка для связи: tg://user?id={user_info['user_id']}"
         )
@@ -297,23 +290,30 @@ def webhook():
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
         bot.process_new_updates([update])
-        return ''
+        return 'ok', 200
     return 'Bad Request', 400
 
 @app.route('/')
 def index():
     return '🤖 Бот предзаказов работает'
 
+@app.route('/health')
+def health():
+    return 'OK', 200
+
 # ====== ЗАПУСК ======
 if __name__ == '__main__':
-    # Устанавливаем вебхук
-    bot.remove_webhook()
-    
-    service_name = os.environ.get('RENDER_SERVICE_NAME', 'dp-sbor')
-    webhook_url = f'https://{service_name}.onrender.com/webhook'
-    
-    bot.set_webhook(url=webhook_url)
-    print(f"✅ Вебхук установлен: {webhook_url}")
+    # Настраиваем вебхук только если на Render
+    if 'RENDER' in os.environ:
+        service_name = os.environ.get('RENDER_SERVICE_NAME')
+        webhook_url = f'https://{service_name}.onrender.com/webhook'
+        bot.remove_webhook()
+        bot.set_webhook(url=webhook_url)
+        print(f"✅ Вебхук установлен: {webhook_url}")
+    else:
+        # Для локального тестирования
+        bot.remove_webhook()
+        print("🔧 Локальный режим (вебхук отключен)")
     
     # Запускаем сервер
     port = int(os.environ.get('PORT', 10000))
