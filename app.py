@@ -78,6 +78,17 @@ def city_selection():
     )
     return keyboard
 
+def new_order_keyboard():
+    """Клавиатура с кнопкой 'Сделать новый заказ'"""
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(
+            "🔄 Сделать новый заказ",
+            callback_data="new_order"
+        )
+    )
+    return keyboard
+
 # ====== ОБРАБОТЧИКИ ======
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -85,6 +96,7 @@ def send_welcome(message):
         "👋 Добро пожаловать, здесь Вы можете оформить предзаказ товаров!\n\n"
         "Забрать заказы в Славгороде можно будет 14 февраля.\n"
         "Забрать заказы в Яровом можно будет 15 февраля.\n"
+        "Переходите в каталог👇.\n"
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=main_menu())
 
@@ -107,6 +119,25 @@ def about_us(message):
         "Периодически делаем поставки в Славгород и Яровое.\n"
         "Мы обрабатываем предзаказы и связываемся с Вами в личных сообщениях\n"
         "Ссылка на наш канал t.me/dp_sbor"
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data == 'new_order')
+def handle_new_order(call):
+    """Обработчик кнопки 'Сделать новый заказ'"""
+    bot.answer_callback_query(call.id, "Начинаем новый заказ!")
+    
+    # Удаляем сообщение с кнопкой (если это inline-кнопка)
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
+    
+    # Отправляем пользователя в каталог
+    bot.send_message(
+        call.message.chat.id,
+        "🔄 *Начинаем новый заказ!*\n\nВыберите товар из каталога:",
+        parse_mode="Markdown",
+        reply_markup=catalog_menu()
     )
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('product_'))
@@ -231,7 +262,7 @@ def handle_order(message):
             'product': product
         }
         
-        # Сообщение покупателю
+        # Сообщение покупателю с кнопкой нового заказа
         confirmation_text = (
             f"✅ *Ваш предзаказ принят!*\n\n"
             f"📍 Город получения: {city}\n"
@@ -239,7 +270,13 @@ def handle_order(message):
             f"Менеджер скоро свяжется с вами для уточнения деталей."
         )
         
-        bot.send_message(chat_id, confirmation_text, parse_mode="Markdown", reply_markup=main_menu())
+        # Отправляем сообщение с кнопкой "Сделать новый заказ"
+        bot.send_message(
+            chat_id, 
+            confirmation_text, 
+            parse_mode="Markdown", 
+            reply_markup=new_order_keyboard()
+        )
         
         # Сообщение менеджеру
         manager_message = (
@@ -261,7 +298,8 @@ def handle_order(message):
             bot.send_message(
                 chat_id,
                 "⚠️ Заказ принят, но возникла проблема с уведомлением менеджера. "
-                "Пожалуйста, свяжитесь с нами через контакты."
+                "Пожалуйста, свяжитесь с нами через контакты.",
+                reply_markup=new_order_keyboard()
             )
         
         # Очищаем данные пользователя
@@ -312,9 +350,3 @@ if __name__ == '__main__':
     # Запускаем сервер
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
-
-
-
-
-
-
