@@ -186,34 +186,24 @@ def select_city(call):
     else:
         user_data[call.message.chat.id] = {"city": city_name}
     
+    # Удаляем сообщение с фото и кнопками
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
+    
     instruction_text = (
         "🟢 *Пошаговая инструкция:*\n\n"
         "1. Напишите, что хотите заказать (например: 'Грецкий орех, 2 упаковки')\n"
         "2. Менеджер свяжется с вами"
     )
     
-    # Пытаемся обновить подпись, если это фото
-    try:
-        bot.edit_message_caption(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            caption=instruction_text,
-            parse_mode="Markdown"
-        )
-        
-        bot.edit_message_reply_markup(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            reply_markup=None
-        )
-    except:
-        # Если не фото, а текстовое сообщение
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=instruction_text,
-            parse_mode="Markdown"
-        )
+    # Отправляем только текстовое сообщение с инструкцией
+    bot.send_message(
+        call.message.chat.id,
+        instruction_text,
+        parse_mode="Markdown"
+    )
     
     # Просим написать заказ
     bot.send_message(
@@ -350,3 +340,7 @@ if __name__ == '__main__':
     # Запускаем сервер
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
+    # Запускаем сервер
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)
+
